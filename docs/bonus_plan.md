@@ -30,8 +30,8 @@ Decisions for items left free by subject §5 (which run to analyze, how to forma
 
 | Item | Decision | Rationale |
 | ---- | -------- | --------- |
-| Source run | A **healthy-state run** with `MEMORY_LIMIT=256`, `CPU_MAX_OCCUPY=80`, `MULTI_THREAD_ENABLE=true`, running for **at least 5 minutes** | Failure runs from `plan.md` end on a kill or a freeze; scheduling patterns need a stretch of normal worker activity to observe |
-| Duration | 5 minutes (≈ 300 s) of clean log activity | Long enough to see multiple rotation cycles per thread; short enough to read in one screenful per minute |
+| Source run | A healthy run with `MEMORY_LIMIT=512`, `CPU_MAX_OCCUPY=10`, `MULTI_THREAD_ENABLE=false`, limited to **45 seconds** | The measured binary deadlocks with multi-threading and continuously grows memory, so a five-minute run is not safe |
+| Duration | 45 seconds of clean log activity | The measured binary continuously grows memory, so the bonus must stay inside the verified observation window |
 | Data source | The application's runtime log only (`evidence/scheduling/app.log`); **not** `monitor.sh`'s `monitor.log` | Subject §5.1 says "pattern process execution order and rotation cycles from **timestamps**" of the worker log; resource-level samples are too coarse |
 | Worker identifier convention | Whatever the app prints (likely `[Thread-A]` / `[Worker-1]` / `[T1]`); the report uses the literal tokens from the captured log | Faithful to the source; the §5.2 template uses `[Thread-A]` only as an example |
 | Timestamp resolution | Whatever the app emits (`.150` in the §5.2 example suggests **millisecond** precision) | Report quotes timestamps verbatim; no reformatting |
@@ -43,7 +43,7 @@ Decisions for items left free by subject §5 (which run to analyze, how to forma
 | Fairness metric | "Max-gap-between-runs per thread" (computed from the excerpt) — if all threads have similar max gaps, that supports RR; one thread dominating supports Priority; threads finishing in arrival order supports FCFS | Single, defensible numeric criterion; computable with `awk` |
 | Quantum estimate (if RR) | Median delta between consecutive `[Thread-X]` lines as a proxy for the time slice | Cheap to compute and matches the qualitative claim "each thread runs for a fixed quantum" |
 | Schema / env changes | **None.** Reuses `env/setup.sh` from `plan.md` Phase 1 with the healthy-state values set above | YAGNI; bonus is interpretation, not feature work |
-| Run isolation | Bonus run uses a fresh, dedicated log file (rotate or truncate before starting) so the raw evidence is exactly the 5-minute window | Avoids confusing the analyst with leftover lines from earlier OOM/CPU/Deadlock runs |
+| Run isolation | Bonus run uses a fresh, dedicated log file so the raw evidence is exactly the 45-second window | Avoids mixing earlier failure runs into the analysis |
 
 > All other free choices follow `docs/plan.md` §2 (host OS, screenshot policy, etc.). This file does **not** override any decision locked there.
 
@@ -56,7 +56,7 @@ New files only — the three core reports and their evidence folders are not tou
 | File | Change |
 | ---- | ------ |
 | `reports/04_scheduling.md` *(new)* | Bonus analysis report following the subject §5.2 template |
-| `evidence/scheduling/app.log` *(new)* | Raw `agent-leak-app` runtime log, 5-minute healthy-state run |
+| `evidence/scheduling/app.log` *(new)* | Raw `agent-leak-app` runtime log, 45-second healthy-state run |
 | `evidence/scheduling/timeline.txt` *(new)* | Annotated excerpt: 10–20 representative lines with thread tags and inferred quanta highlighted |
 | `evidence/scheduling/cadence.csv` *(new, optional)* | One row per worker context-switch: `timestamp,thread,gap_ms_since_prev_of_same_thread` |
 | `README.md` | Append a **"Bonus"** section linking `reports/04_scheduling.md` and `evidence/scheduling/` |
@@ -69,15 +69,15 @@ New files only — the three core reports and their evidence folders are not tou
 
 ### 4.1 Pre-flight
 
-1. Source `env/setup.sh`; override env to the healthy-state values: `MEMORY_LIMIT=256`, `CPU_MAX_OCCUPY=80`, `MULTI_THREAD_ENABLE=true`.
+1. Use `scripts/run_experiment.sh` with the measured healthy-state values: `MEMORY_LIMIT=512`, `CPU_MAX_OCCUPY=10`, `MULTI_THREAD_ENABLE=false`.
 2. Truncate or rotate `agent-leak-app`'s log file before starting, so the captured window contains only this run.
 3. Note the wall-clock start time in `evidence/scheduling/notes.txt`.
 
 ### 4.2 Capture
 
-- Run `agent-leak-app` for at least 5 minutes; tee stdout/stderr to `evidence/scheduling/app.log`.
+- Run `agent-leak-app` for 45 seconds; tee stdout/stderr to `evidence/scheduling/app.log`.
 - Do **not** run `top`/`ps` loops in parallel — sampling pressure could alter scheduling decisions. The application log is the only data source.
-- After 5 minutes, send `Ctrl+C`; record the wall-clock stop time in `notes.txt`.
+- After 45 seconds, stop the process and record the wall-clock stop time in `notes.txt`.
 
 ### 4.3 Trim & annotate
 
@@ -143,7 +143,7 @@ Following subject §5.2 verbatim where possible:
 # [Analysis] Inferring agent-leak-app's scheduling algorithm from log patterns
 
 ## 1. Log Observation Overview
-- One-paragraph context: the 5-minute healthy-state run, env values, log file path.
+- One-paragraph context: the 45-second healthy-state run, env values, log file path.
 
 ## 2. Evidence
 - 10–20 annotated lines from `evidence/scheduling/timeline.txt`.
@@ -172,7 +172,7 @@ Each phase = **one logical change = one commit** (`.cursorrules` §6). Conventio
 
 ### Phase B1 — Healthy-state capture
 
-- Source `env/setup.sh` with the §2 healthy-state overrides; run `agent-leak-app` for 5 minutes; save the log to `evidence/scheduling/app.log` and write `evidence/scheduling/notes.txt`.
+- Run `scripts/run_experiment.sh` with the §2 healthy-state values for 45 seconds; save the relevant log as `evidence/scheduling/app.log` and write `evidence/scheduling/notes.txt`.
 - Commit: `feat(evidence): capture 5-min healthy-state log for scheduling analysis`
 
 ### Phase B2 — Timeline & cadence extraction
@@ -196,7 +196,7 @@ Each phase = **one logical change = one commit** (`.cursorrules` §6). Conventio
 
 Manual checklist layered on top of `plan.md` §9.
 
-- [ ] `evidence/scheduling/app.log` exists and covers a contiguous ≥ 5-minute window from a healthy-state run (no kill, no freeze).
+- [ ] `evidence/scheduling/app.log` exists and covers a contiguous 45-second healthy-state window (no kill, no freeze).
 - [ ] `evidence/scheduling/timeline.txt` contains 10–20 worker-tagged lines from `app.log`, with right-margin annotations identifying at least one preemption-style switch.
 - [ ] If present, `evidence/scheduling/cadence.csv` parses as CSV and has one row per worker switch; per-thread max-gap and median-gap are derivable with one `awk` line.
 - [ ] `reports/04_scheduling.md` has the four §-headings from subject §5.2 (Log Observation Overview, Evidence, Pattern Analysis & Conclusion, Strengths/Weaknesses/Fit) and a title starting with `[Analysis]`.
@@ -217,7 +217,7 @@ Manual checklist layered on top of `plan.md` §9.
 | Worker tags differ from the §5.2 example (`[Thread-A]`) | Use whatever tokens the run actually emits; the report quotes literals from `app.log` |
 | Timestamps are second-resolution, not millisecond | Quantum estimation degrades to "≤ 1 s"; the qualitative RR-vs-Priority distinction can still be made from line ordering alone |
 | Capture overlaps with cron `monitor.sh` runs that briefly perturb scheduling | Stop the cron job (`crontab -r` or temporarily comment out the entry) for the bonus capture window; restore after |
-| Log truncation/rotation during the 5-minute window | Increase the rotation cap before running, or copy `app.log` to `evidence/scheduling/` immediately on `Ctrl+C` |
+| Log truncation/rotation during the 45-second window | Copy the captured `app.log` into `evidence/scheduling/` immediately after the run |
 | Inference is debatable | The §3 rule-outs are the defense — each must cite a specific log fragment, not opinion |
 | Bonus prose contradicts core reports' env-var claims | Bonus uses **healthy-state** values intentionally; the report says so in §1 to avoid confusing the reader who comes from the OOM/CPU/Deadlock reports |
 | Overreach into kernel-vs-userland scheduling | Stay at the observable layer (process / thread output ordering). If the app uses a Python `threading` runtime, mention the GIL in one sentence; do not turn the report into a CPython internals essay |

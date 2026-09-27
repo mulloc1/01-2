@@ -1,0 +1,4 @@
+# Runtime secrets and local captures that must never be committed.
+secret.key
+*.pid
+
