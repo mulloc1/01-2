@@ -45,7 +45,7 @@ readonly REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly OUTPUT_DIR="${REPO_ROOT}/evidence/${CASE_NAME}/${PHASE_NAME}"
 readonly EXECUTABLE="/opt/agent-app/agent-leak-app"
 readonly SOURCE_BINARY="${REPO_ROOT}/agent-app-leak/agent-leak-app-arm64"
-readonly START_SCRIPT="${REPO_ROOT}/scripts/start_agent.sh"
+readonly START_SCRIPT="/opt/agent-app/bin/start_agent.sh"
 readonly CPU_SAMPLER="${REPO_ROOT}/scripts/sample_process_cpu.sh"
 readonly MONITOR="/opt/agent-app/bin/monitor.sh"
 
@@ -59,6 +59,11 @@ fi
 [[ "$CPU_LIMIT_VALUE" =~ ^[0-9]+$ ]] || exit 2
 [[ "$MULTI_THREAD_VALUE" =~ ^(true|false)$ ]] || exit 2
 [[ "$DURATION_SECONDS" =~ ^[0-9]+$ ]] || exit 2
+sudo -u agent-dev test -x "$START_SCRIPT" || {
+  printf 'launcher is not executable by agent-dev: %s\n' "$START_SCRIPT" >&2
+  printf 'run first: sudo ./scripts/setup_lab.sh "$PWD"\n' >&2
+  exit 1
+}
 
 mkdir -p "$OUTPUT_DIR"
 find "$OUTPUT_DIR" -mindepth 1 -maxdepth 1 -type f -delete
@@ -94,10 +99,25 @@ sudo -u agent-dev nohup "$START_SCRIPT" \
 launcher_pid="$!"
 printf 'launcher_pid=%s\n' "$launcher_pid" >> "$OUTPUT_DIR/metadata.env"
 
+started=false
 for _ in {1..20}; do
-  pgrep -x agent-leak-app >/dev/null 2>&1 && break
+  if pgrep -x agent-leak-app >/dev/null 2>&1; then
+    started=true
+    break
+  fi
   sleep 0.5
 done
+
+if [[ "$started" != true ]]; then
+  wait "$launcher_pid" 2>/dev/null || true
+  printf 'agent failed to start; inspect %s/app.log\n' "$OUTPUT_DIR" >&2
+  if [[ -s "$OUTPUT_DIR/app.log" ]]; then
+    tail -n 30 "$OUTPUT_DIR/app.log" >&2
+  else
+    printf 'app.log is empty; rerun setup_lab.sh and check agent-dev path permissions.\n' >&2
+  fi
+  exit 1
+fi
 
 "$CPU_SAMPLER" "$OUTPUT_DIR/cpu_interval_samples.txt" &
 cpu_sampler_pid="$!"
