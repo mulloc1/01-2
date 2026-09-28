@@ -1,0 +1,30 @@
+### 2026-09-28T16:45:15+09:00 elapsed=0s
+LISTEN 0      1      0.0.0.0:15034 0.0.0.0:* users:(("agent-leak-app",pid=7441,fd=4))
+### 2026-09-28T16:45:19+09:00 elapsed=4s
+LISTEN 0      1      0.0.0.0:15034 0.0.0.0:* users:(("agent-leak-app",pid=7441,fd=4))
+### 2026-09-28T16:45:22+09:00 elapsed=7s
+LISTEN 0      1      0.0.0.0:15034 0.0.0.0:* users:(("agent-leak-app",pid=7441,fd=4))
+### 2026-09-28T16:45:25+09:00 elapsed=10s
+LISTEN 0      1      0.0.0.0:15034 0.0.0.0:* users:(("agent-leak-app",pid=7441,fd=4))
+### 2026-09-28T16:45:29+09:00 elapsed=14s
+LISTEN 0      1      0.0.0.0:15034 0.0.0.0:* users:(("agent-leak-app",pid=7441,fd=4))
+### 2026-09-28T16:45:32+09:00 elapsed=17s
+LISTEN 0      1      0.0.0.0:15034 0.0.0.0:* users:(("agent-leak-app",pid=7441,fd=4))
+### 2026-09-28T16:45:35+09:00 elapsed=20s
+LISTEN 0      1      0.0.0.0:15034 0.0.0.0:* users:(("agent-leak-app",pid=7441,fd=4))
+### 2026-09-28T16:45:39+09:00 elapsed=24s
+LISTEN 0      1      0.0.0.0:15034 0.0.0.0:* users:(("agent-leak-app",pid=7441,fd=4))
+### 2026-09-28T16:45:42+09:00 elapsed=27s
+LISTEN 0      1      0.0.0.0:15034 0.0.0.0:* users:(("agent-leak-app",pid=7441,fd=4))
+### 2026-09-28T16:45:45+09:00 elapsed=30s
+LISTEN 0      1      0.0.0.0:15034 0.0.0.0:* users:(("agent-leak-app",pid=7441,fd=4))
+### 2026-09-28T16:45:49+09:00 elapsed=34s
+LISTEN 0      1      0.0.0.0:15034 0.0.0.0:* users:(("agent-leak-app",pid=7441,fd=4))
+### 2026-09-28T16:45:52+09:00 elapsed=37s
+LISTEN 0      1      0.0.0.0:15034 0.0.0.0:* users:(("agent-leak-app",pid=7441,fd=4))
+### 2026-09-28T16:45:55+09:00 elapsed=40s
+LISTEN 0      1      0.0.0.0:15034 0.0.0.0:* users:(("agent-leak-app",pid=7441,fd=4))
+### 2026-09-28T16:45:59+09:00 elapsed=44s
+LISTEN 0      1      0.0.0.0:15034 0.0.0.0:* users:(("agent-leak-app",pid=7441,fd=4))
+### 2026-09-28T16:46:02+09:00 elapsed=47s
+LISTEN 0      1      0.0.0.0:15034 0.0.0.0:* users:(("agent-leak-app",pid=7441,fd=4))
