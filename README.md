@@ -26,19 +26,21 @@ OrbStack의 Ubuntu ARM64 VM에서 `agent-leak-app`의 OOM, CPU 과점유, Deadlo
 
 ## 재현 방법
 
-VM 환경은 다음 명령으로 복구합니다.
+OrbStack에서 Ubuntu 머신을 연 뒤 저장소로 이동하고 실행 권한을 부여합니다.
 
 ```bash
-sudo ./scripts/setup_lab.sh "$(pwd)"
+orb -m ubuntu
+cd /Users/baejaemin/Project/codyssey/01-2.linux_troubleshooting
+chmod +x scripts/*.sh
 ```
 
-각 실험은 다음 형식으로 실행합니다.
+완전히 새로운 Ubuntu 환경에서는 먼저 계정·그룹·디렉터리·환경 변수·키·바이너리를 한 번 설정합니다.
 
 ```bash
-./scripts/run_experiment.sh CASE PHASE MEMORY_LIMIT CPU_MAX_OCCUPY MULTI_THREAD_ENABLE DURATION_SECONDS
+sudo ./scripts/setup_lab.sh
 ```
 
-실제 제출 증거에 사용한 조합은 다음과 같습니다.
+이후 아래 실험을 반드시 한 줄씩 순서대로 실행합니다. 각 명령이 끝난 뒤 다음 명령을 실행합니다.
 
 ```bash
 ./scripts/run_experiment.sh oom before 50 10 false 45
@@ -49,7 +51,15 @@ sudo ./scripts/setup_lab.sh "$(pwd)"
 ./scripts/run_experiment.sh deadlock after 512 10 false 45
 ```
 
-통합 증거에는 `monitor.sh`의 시스템 지표와 PID별 RSS, 0.25초 간격 CPU 표본에서 평가에 필요한 값만 추려 기록했습니다.
+마지막으로 보고서와 평가용 evidence 구성을 검사합니다.
+
+```bash
+./scripts/verify_results.sh
+```
+
+`start_agent.sh`, `monitor.sh`, `sample_process_cpu.sh`는 `run_experiment.sh`가 자동으로 호출하므로 직접 실행할 필요가 없습니다.
+
+주제별 증거에는 `monitor.sh`의 시스템 지표와 PID별 RSS, 0.25초 간격 CPU 표본에서 평가에 필요한 값만 추려 기록했습니다.
 
 ## 보안 및 해석 원칙
 

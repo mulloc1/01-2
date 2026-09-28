@@ -3,7 +3,7 @@
 set -Eeuo pipefail
 IFS=$'\n\t'
 
-readonly REPO_ROOT="${1:?usage: setup_lab.sh REPOSITORY_ROOT}"
+readonly REPO_ROOT="${1:-$(pwd)}"
 readonly SOURCE_BINARY="${REPO_ROOT}/agent-app-leak/agent-leak-app-arm64"
 readonly SOURCE_MONITOR="${REPO_ROOT}/scripts/monitor.sh"
 readonly AGENT_HOME_DIR="/opt/agent-app"
@@ -17,9 +17,13 @@ fi
 
 [[ -x "$SOURCE_BINARY" ]] || { printf 'missing executable: %s\n' "$SOURCE_BINARY" >&2; exit 1; }
 [[ -r "$SOURCE_MONITOR" ]] || { printf 'missing monitor: %s\n' "$SOURCE_MONITOR" >&2; exit 1; }
-id agent-dev >/dev/null 2>&1 || { printf 'missing user: agent-dev\n' >&2; exit 1; }
-id agent-admin >/dev/null 2>&1 || { printf 'missing user: agent-admin\n' >&2; exit 1; }
-getent group agent-core >/dev/null 2>&1 || { printf 'missing group: agent-core\n' >&2; exit 1; }
+
+getent group agent-common >/dev/null 2>&1 || groupadd agent-common
+getent group agent-core >/dev/null 2>&1 || groupadd agent-core
+id agent-dev >/dev/null 2>&1 || useradd --create-home --shell /bin/bash agent-dev
+id agent-admin >/dev/null 2>&1 || useradd --create-home --shell /bin/bash agent-admin
+usermod --append --groups agent-common,agent-core agent-dev
+usermod --append --groups agent-common,agent-core agent-admin
 
 install -d -o agent-dev -g agent-core -m 2750 "$AGENT_HOME_DIR"
 install -d -o agent-dev -g agent-core -m 2770 \

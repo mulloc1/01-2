@@ -4,15 +4,30 @@ set -Eeuo pipefail
 IFS=$'\n\t'
 export LC_ALL=C
 
+if [[ "$#" -ne 6 ]]; then
+  cat >&2 <<'EOF'
+usage: run_experiment.sh CASE PHASE MEMORY CPU MULTI DURATION_SECONDS
+
+examples:
+  ./scripts/run_experiment.sh oom before 50 10 false 45
+  ./scripts/run_experiment.sh oom after 512 10 false 45
+  ./scripts/run_experiment.sh cpu before 512 100 false 45
+  ./scripts/run_experiment.sh cpu after 512 10 false 45
+  ./scripts/run_experiment.sh deadlock before 512 10 true 45
+  ./scripts/run_experiment.sh deadlock after 512 10 false 45
+EOF
+  exit 2
+fi
+
 exec 9>/tmp/agent-leak-experiment.lock
 flock -n 9 || { printf 'another experiment is already running\n' >&2; exit 3; }
 
-readonly CASE_NAME="${1:?usage: run_experiment.sh CASE PHASE MEMORY CPU MULTI DURATION_SECONDS}"
-readonly PHASE_NAME="${2:?missing phase}"
-readonly MEMORY_LIMIT_VALUE="${3:?missing memory limit}"
-readonly CPU_LIMIT_VALUE="${4:?missing cpu limit}"
-readonly MULTI_THREAD_VALUE="${5:?missing multi-thread value}"
-readonly DURATION_SECONDS="${6:?missing duration}"
+readonly CASE_NAME="$1"
+readonly PHASE_NAME="$2"
+readonly MEMORY_LIMIT_VALUE="$3"
+readonly CPU_LIMIT_VALUE="$4"
+readonly MULTI_THREAD_VALUE="$5"
+readonly DURATION_SECONDS="$6"
 readonly REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly OUTPUT_DIR="${REPO_ROOT}/evidence/${CASE_NAME}/${PHASE_NAME}"
 readonly EXECUTABLE="/opt/agent-app/agent-leak-app"

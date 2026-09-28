@@ -9,7 +9,7 @@ cd "$REPO_ROOT"
 require_pattern() {
   local pattern="$1"
   local file="$2"
-  rg -q -- "$pattern" "$file" || {
+  grep -Eq -- "$pattern" "$file" || {
     printf 'FAIL: pattern %q not found in %s\n' "$pattern" "$file" >&2
     exit 1
   }
@@ -41,7 +41,7 @@ require_pattern 'WAITING for \[Shared_Memory_A\].*BLOCKED' "$DEADLOCK_EVIDENCE"
 require_pattern 'futex_wait' "$DEADLOCK_EVIDENCE"
 
 for report in reports/01_oom.md reports/02_cpu.md reports/03_deadlock.md; do
-  [[ "$(rg -c '^## [1-4]\. ' "$report")" -eq 4 ]] || {
+  [[ "$(grep -Ec '^## [1-4]\. ' "$report")" -eq 4 ]] || {
     printf 'FAIL: report sections are incomplete: %s\n' "$report" >&2
     exit 1
   }
