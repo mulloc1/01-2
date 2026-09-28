@@ -1,4 +1,0 @@
-### 2026-09-28T16:42:42+09:00 elapsed=0s
-LISTEN 0      1      0.0.0.0:15034 0.0.0.0:* users:(("agent-leak-app",pid=1921,fd=4))
-### 2026-09-28T16:42:46+09:00 elapsed=4s
-LISTEN 0      1      0.0.0.0:15034 0.0.0.0:* users:(("agent-leak-app",pid=1921,fd=4))

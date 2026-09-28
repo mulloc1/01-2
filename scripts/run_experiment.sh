@@ -32,7 +32,8 @@ EOF
   exit 2
 fi
 
-exec 9>/tmp/agent-leak-experiment.lock
+readonly LOCK_FILE="${XDG_RUNTIME_DIR:-/tmp}/agent-leak-experiment-$(id -u).lock"
+exec 9>"$LOCK_FILE"
 flock -n 9 || { printf 'another experiment is already running\n' >&2; exit 3; }
 
 readonly CASE_NAME="$1"
