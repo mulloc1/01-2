@@ -1,8 +1,7 @@
-# 기준 14 · 코드 수준 개선
+# 평가 문항 14 · 코드 수준 개선
 
-- OOM: 처리 후 참조 해제, 크기 제한 queue, 메모리 회귀 테스트
-- CPU: busy loop를 blocking wait/backoff로 변경, worker pool 제한
-- Deadlock: 전역 lock 순서와 `try_lock`/timeout 적용
+- OOM: 작업 완료 후 참조를 해제하고, 무제한 리스트·캐시·큐에 크기 제한과 제거 정책을 둡니다. 반복 부하 테스트에서 RSS가 기준선으로 돌아오는지도 검증합니다.
+- CPU: busy loop를 blocking I/O, 이벤트 대기 또는 sleep/backoff 방식으로 바꿉니다. worker pool의 최대 동시 작업 수도 제한합니다.
+- Deadlock: 모든 스레드가 `A → B`처럼 동일한 전역 순서로 락을 획득하게 합니다. 여러 락이 필요하면 timeout이 있는 `try_lock`과 실패 시 rollback을 적용하고 락 범위를 줄입니다.
 
-환경 변수 조정은 재현과 완화용이며 위 코드 변경이 근본 해결이다.
-
+환경변수 변경은 장애 재현과 임시 완화를 위한 것이며, 누수·불필요한 연산·락 순환 관계를 없애는 코드 변경이 근본 해결입니다.
