@@ -4,6 +4,19 @@ set -Eeuo pipefail
 IFS=$'\n\t'
 export LC_ALL=C
 
+if [[ "$#" -eq 0 ]]; then
+  readonly SCRIPT_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
+  printf 'Running all six experiments sequentially.\n'
+  "$SCRIPT_PATH" oom before 50 10 false 45
+  "$SCRIPT_PATH" oom after 512 10 false 45
+  "$SCRIPT_PATH" cpu before 512 100 false 45
+  "$SCRIPT_PATH" cpu after 512 10 false 45
+  "$SCRIPT_PATH" deadlock before 512 10 true 45
+  "$SCRIPT_PATH" deadlock after 512 10 false 45
+  printf 'All experiments completed. Raw logs are under evidence/{oom,cpu,deadlock}/{before,after}/.\n'
+  exit 0
+fi
+
 if [[ "$#" -ne 6 ]]; then
   cat >&2 <<'EOF'
 usage: run_experiment.sh CASE PHASE MEMORY CPU MULTI DURATION_SECONDS
@@ -143,3 +156,9 @@ wait "$cpu_sampler_pid" 2>/dev/null || true
 
 printf '%s/%s complete: %s (%ss)\n' \
   "$CASE_NAME" "$PHASE_NAME" "$termination" "$((end_epoch - start_epoch))"
+
+if [[ "$CASE_NAME" == "deadlock" && "$PHASE_NAME" == "before" && "$termination" != "observation_timeout" ]]; then
+  printf 'WARNING: deadlock/before exited unexpectedly; expected observation_timeout.\n' >&2
+  printf 'Check: %s/app.log\n' "$OUTPUT_DIR" >&2
+  tail -n 12 "$OUTPUT_DIR/app.log" >&2 || true
+fi

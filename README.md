@@ -42,6 +42,14 @@ sudo ./scripts/setup_lab.sh
 
 이후 아래 실험을 반드시 한 줄씩 순서대로 실행합니다. 각 명령이 끝난 뒤 다음 명령을 실행합니다.
 
+전체 실험을 한 번에 실행하려면 인자 없이 실행합니다.
+
+```bash
+./scripts/run_experiment.sh
+```
+
+개별 실행이 필요하면 아래 명령을 사용합니다.
+
 ```bash
 ./scripts/run_experiment.sh oom before 50 10 false 45
 ./scripts/run_experiment.sh oom after 512 10 false 45
